@@ -6,7 +6,8 @@ export const cartRoute = express.Router();
 
 cartRoute.put("/add-book-to-cart",authenticateToken, async (req, res) => {
     try {
-        const { bookId, id } = req.headers;
+        const { bookId } = req.body; // Get bookId from request body
+        const { id } = req.headers; // Get user id from authenticated user
 
         const user = await User.findById(id);
         const bookAlreadyInCart = user.cart.includes(bookId);
@@ -18,7 +19,7 @@ cartRoute.put("/add-book-to-cart",authenticateToken, async (req, res) => {
         }
 
         if (bookAlreadyInCart) {
-            return res.status(400).json({
+            return res.status(200).json({
                 status:"Success",
                 message: "Book Already In Cart!"
             })
@@ -38,24 +39,32 @@ cartRoute.put("/add-book-to-cart",authenticateToken, async (req, res) => {
     }
 })
 
-cartRoute.put("/delete-book-from-cart",authenticateToken,async (req, res) => {
+cartRoute.put("/delete-book-from-cart", authenticateToken, async (req, res) => {
     try {
-        const { bookId } = req.params;
+        const { bookId } = req.body;
         const { id } = req.headers;
 
+        // Check if user exists
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        // Update the cart by removing the bookId
         await User.findByIdAndUpdate(id, {
-            $pull : {cart:bookId}
-        })
+            $pull: { cart: bookId }
+        });
 
         return res.status(200).json({
             message: "Book Removed from Cart!"
-        })
+        });
     } catch (error) {
-        return res.status(400).json({
-            message:`Some Error Occured ! ${error}`
-        })
+        return res.status(500).json({
+            message: `Some error occurred! ${error.message}`
+        });
     }
-})
+});
+
 
 cartRoute.get("/get-user-cart", authenticateToken, async (req, res) => {
     try {

@@ -10,35 +10,42 @@ orderRoute.post("/place-new-order", authenticateToken, async (req, res) => {
         const { id } = req.headers;
         const { order } = req.body;
 
-        for (const orderData of order) {
-            const order = new Order.create({
-                user: id,
-                book: orderData._id,
-            })
-            const orderDataSaved = new order.save();
-
-            await User.findByIdAndUpdate(id, {
-                $push: { orders: orderDataSaved._id }
-            })
-
-
-            await User.findByIdAndUpdate(id, {
-                $pull: { cart: orderDataSaved._id }
-            })
+        // Check if order data is valid
+        if (!order || order.length === 0) {
+            return res.status(400).json({ message: 'No order data provided.' });
         }
 
+        for (const orderData of order) {
+            // Create a new order
+            const newOrder = await Order.create({
+                user: id,
+                book: orderData._id,
+            });
+
+            // Update user with new order
+            await User.findByIdAndUpdate(id, {
+                $push: { orders: newOrder._id }
+            });
+
+            // Remove the book from user's cart
+            await User.findByIdAndUpdate(id, {
+                $pull: { cart: orderData._id }
+            });
+        }
 
         return res.status(200).json({
             status: "Success",
             message: "Order Placed Successfully!"
-        })
+        });
 
     } catch (error) {
+        console.error(error);
         return res.status(400).json({
-            message: `Some Error Occured :${error}`,
-        })
+            message: `Some Error Occurred: ${error.message}`,
+        });
     }
-})
+});
+
 
 orderRoute.get("/get-order-history", authenticateToken, async (req, res) => {
     try {
@@ -46,7 +53,7 @@ orderRoute.get("/get-order-history", authenticateToken, async (req, res) => {
 
         const userData = await User.findById(id).populate({
             path: "orders",
-            populate: { path: "books" }
+            populate: { path: "book" }
         })
 
         const orderData = userData.orders.reverse();
@@ -63,25 +70,28 @@ orderRoute.get("/get-order-history", authenticateToken, async (req, res) => {
 
 orderRoute.get("/get-orders", authenticateToken, async (req, res) => {
     try {
-        const userData = await Order.find().populate({
-            path: "books"
-        }).populate({
-            path: "user"
-        })
+        const userData = await Order.find()
+            .populate({
+                path: "book" 
+            })
+            .populate({
+                path: "user"
+            })
             .sort({
                 createdAt: -1
-            })
+            });
 
         return res.json({
             status: "Success",
             data: userData,
-        })
+        });
     } catch (error) {
+        console.error(error); // Added for debugging
         return res.status(400).json({
-            message: `Some Error Occured :${error}`,
-        })
+            message: `Some Error Occurred: ${error.message}`,
+        });
     }
-})
+});
 
 
 

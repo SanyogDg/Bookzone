@@ -21,7 +21,8 @@ favRouter.put("/add-book-to-favourites", authenticateToken, async (req, res) => 
             user.favourites = [];
         }
 
-        const isBookFavourite = user.favourites.includes(bookId);
+        // Use the correct method to check if the book is already in favourites
+        const isBookFavourite = user.favourites.some(favBookId => favBookId && favBookId.toString() === bookId);
 
         if (isBookFavourite) {
             return res.status(200).json({ message: "Book Already In Favourites!" });
@@ -41,28 +42,34 @@ favRouter.put("/add-book-to-favourites", authenticateToken, async (req, res) => 
     }
 });
 
+
+
 favRouter.put("/delete-book-from-favourite", authenticateToken, async (req, res) => {
     try {
-        const { bookId, id } = req.headers;
+        const { bookid, id } = req.headers;  // Change to req.body to access the data correctly
 
         const userData = await User.findById(id);
 
-        const isBookInFavourite = await userData.favourites.includes(bookId);
-
-        if (isBookInFavourite) {
-            await User.findByIdAndUpdate(id, { $pull: { favourites: bookId } });
+        if (!userData) {
+            return res.status(404).json({ message: "User not found." });
         }
 
-        return res.status(200).json({
-            message: "Book Removed from Favourites!"
-        })
+        const isBookInFavourite = userData.favourites.includes(bookid);
+
+        if (isBookInFavourite) {
+            await User.findByIdAndUpdate(id, { $pull: { favourites: bookid } });
+            return res.status(200).json({ message: "Book removed from Favourites!" });
+        } else {
+            return res.status(400).json({ message: "Book not found in Favourites." });
+        }
 
     } catch (error) {
         return res.status(500).json({
             message: `Some error Occurred: ${error.message}.`
         });
     }
-})
+});
+
 
 
 // SOME ERROR IN FETCHING FAVOURITE BOOK:-

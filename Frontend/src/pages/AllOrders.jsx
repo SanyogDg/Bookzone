@@ -19,6 +19,7 @@ const AllOrders = () => {
       try {
         const response = await axios.get('http://localhost:3000/api/v1/order/get-orders', { headers });
         setOrders(response.data.data);
+        // console.log(response.data.data);
       } catch (error) {
         console.error('Error fetching orders:', error);
       }
@@ -75,23 +76,27 @@ const AllOrders = () => {
               {/* <div className="flex items-center justify-center w-[10%] md:w-[5%]">
                 <h1><FaUser /></h1>
               </div> */}
-          </div>
-          {orders.map((order, i) => (
+            </div>
+{/*             
+            {!orders && <div>
+              ah
+            </div>} */}
+          {orders && orders.map((order, i) => (
             <div key={order._id} className="bg-zinc-800 py-2 px-4 flex gap-2 hover:bg-zinc-900 hover:cursor-pointer transition-all duration-300 items-center text-center">
               <div className="w-[3%] text-center">{i + 1}</div>
               <div className="w-[40%] md:w-[22%]">
                 <Link
-                  to={`/view-book-details/${order.book._id}`}
+                  to={`/view-book-details/${order._id}`}
                   className="hover:text-blue-300"
                 >
-                  {order.book.title}
+                  {order.title}
                 </Link>
               </div>
               <div className="w-0 md:w-[45%] hidden md:block">
-                <h1>{order.book.desc ? order.book.desc.slice(0, 50) + '...' : 'No description'}</h1>
+                <h1>{order.desc ? order.book.desc.slice(0, 50) + '...' : 'No description'}</h1>
               </div>
               <div className="w-[17%] md:w-[9%]">
-                <h1>₹{order.book.price}</h1>
+                <h1>₹{order.price}</h1>
               </div>
               <div className='flex flex-col items-center justify-center'>
                 <div className="w-[30%] md:w-[16%]">
